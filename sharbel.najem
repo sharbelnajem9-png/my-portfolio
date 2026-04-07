@@ -160,7 +160,417 @@ section{padding:120px 60px}
 .footer-socials{display:flex;gap:16px}
 .footer-socials a{color:var(--white-30);transition:color 0.3s;display:flex}
 .footer-socials a:hover{color:var(--white)}
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>הפרויקטים והסרטונים שלי</title>
+    <style>
+        /* === עיצוב בסיסי וקטלני (Dark Mode Style) === */
+        :root {
+            --bg-color: #121212;
+            --text-color: #ffffff;
+            --card-bg: #1e1e1e;
+            --accent-color: #e50914; /* צבע אדום שמזכיר וידאו/יוטיוב */
+        }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        h2 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .section-divider {
+            border: 0;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #333, transparent);
+            margin: 50px 0;
+        }
+
+        /* === גריד מועדפים === */
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            justify-items: center;
+        }
+
+        /* טיפול ביחסי תמונה (אורך/רוחב) */
+        .vid-wrapper {
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            background: #000;
+        }
+        .vid-wrapper.short { aspect-ratio: 9 / 16; }
+        .vid-wrapper.regular { aspect-ratio: 16 / 9; }
+        
+        .vid-wrapper iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* === כרטיסיות פרויקטים מבחוץ === */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .project-card {
+            position: relative;
+            aspect-ratio: 16 / 9;
+            border-radius: 16px;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background: #000;
+        }
+
+        .project-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 12px 30px rgba(229, 9, 20, 0.4);
+        }
+
+        /* סרטון הרקע בכרטיסייה החיצונית (פעיל אך לא לחיץ) */
+        .project-card iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            pointer-events: none; /* מונע לחיצה על הוידאו כדי שהקליק יפתח את הפרויקט */
+            opacity: 0.6; /* טיפה כהה כדי שהטקסט יבלוט */
+            transition: opacity 0.3s;
+        }
+
+        .project-card:hover iframe {
+            opacity: 0.8;
+        }
+
+        /* שכבת הטקסט על הפרויקט */
+        .project-title-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.2) 100%);
+            z-index: 2;
+        }
+
+        .project-title-overlay h3 {
+            margin: 0;
+            padding: 10px 20px;
+            font-size: 1.8em;
+            text-align: center;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+            word-break: break-word;
+        }
+
+        /* === חלון קופץ (Modal) לפרויקט === */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            width: 90%;
+            max-width: 1200px;
+            height: 85vh;
+            border-radius: 20px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 40px rgba(0,0,0,0.8);
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+            border: 1px solid #333;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 20px 30px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(30,30,30,0.95);
+            border-radius: 20px 20px 0 0;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 2em;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 2.5em;
+            cursor: pointer;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+
+        .close-btn:hover { color: var(--accent-color); }
+
+        .modal-body {
+            padding: 30px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        /* גריד פנימי של הפרויקט */
+        .project-videos-layout {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            justify-items: center;
+        }
+
+        /* קוסמטיקה לפס גלילה בתוך החלון */
+        .modal-body::-webkit-scrollbar { width: 8px; }
+        .modal-body::-webkit-scrollbar-track { background: var(--bg-color); }
+        .modal-body::-webkit-scrollbar-thumb { background: #555; border-radius: 10px; }
+        .modal-body::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
+
+    </style>
+</head>
+<body>
+
+    <div id="favorites-section">
+        <h2>סרטונים מועדפים 🔥</h2>
+        <div id="favorites-grid" class="video-grid"></div>
+    </div>
+
+    <hr class="section-divider">
+
+    <div id="projects-section">
+        <h2>הפרויקטים שלי 🎬</h2>
+        <div id="projects-grid" class="projects-grid"></div>
+    </div>
+
+    <div id="project-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">שם הפרויקט</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="modal-videos" class="project-videos-layout"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === נתונים ===
+        
+        // 1. מועדפים (כולל הגדרת סוג הסרטון לצורך עיצוב נכון)
+        const favorites = [
+            { id: "fLC4ozAwIy4", type: "short" }, { id: "B7jlnjqGoYM", type: "short" },
+            { id: "tJ6X18bg3AM", type: "short" }, { id: "fUuuqmBUZvU", type: "short" },
+            { id: "kqSvuenhlNk", type: "short" }, { id: "Q8OU-gtThTk", type: "short" },
+            { id: "E7D6tVSff9c", type: "short" }, { id: "FZwLq_b1jJQ", type: "short" },
+            { id: "NnWmPEr5HNc", type: "regular" }, { id: "NJj3ZdB3JVw", type: "short" },
+            { id: "lflJ219lmwg", type: "short" }, { id: "JL3Tmc45rJw", type: "regular" },
+            { id: "UUp-zoFAZKU", type: "regular" }, { id: "J2KJYLRMIIM", type: "short" },
+            { id: "0aWLRPdA3J4", type: "short" }, { id: "iEVwhltzPiE", type: "regular" },
+            { id: "XwNqsQ1-n9g", type: "regular" }, { id: "iUFH3oRuMI8", type: "regular" },
+            { id: "pKbUd34fPjo", type: "regular" }, { id: "54X0PiqYA88", type: "regular" },
+            { id: "c54zF_7IOwo", type: "regular" }
+        ];
+
+        // 2. פרויקטים (מאוגדים תחת כותרת אחת)
+        const projectsData = [
+            {
+                title: "Podcast",
+                playlistId: "PLxqLP3PD9uxm0NoKNJ61zPpt3sptBSaDk",
+                coverVideoId: "iHCMzmN7Yiw",
+                videos: [
+                    { id: "iHCMzmN7Yiw", type: "short" }, { id: "flh0fYWu0U0", type: "short" },
+                    { id: "RKcJQcWUdWw", type: "short" }, { id: "lCa_yrZCbyQ", type: "short" }
+                ]
+            },
+            {
+                title: "Real Estate & Interior Design",
+                playlistId: "PLxqLP3PD9uxlG4RcsPhAi1Rqjij_kHYaz",
+                coverVideoId: "0LWdH_13Nk4",
+                videos: [
+                    { id: "0LWdH_13Nk4", type: "short" }, { id: "wqBzz4bmc5U", type: "short" },
+                    { id: "7Fzj0sxoJeg", type: "short" }, { id: "hVrYX7ACOnY", type: "short" },
+                    { id: "0CgusHan-Lg", type: "short" }, { id: "F4Tlzd_Es5I", type: "short" },
+                    { id: "GQYE4mDhFxo", type: "short" }
+                ]
+            },
+            {
+                title: "Hotels",
+                playlistId: "PLxqLP3PD9uxnqSMn49Ekaz06pWcFtVcHd",
+                coverVideoId: "mtc8M91PBHI", // שורט ראשון כקאבר
+                videos: [
+                    { id: "mtc8M91PBHI", type: "short" }, { id: "vL_uCo50aoI", type: "regular" },
+                    { id: "HpmxjaMdaFM", type: "regular" }, { id: "ePshwYQIJJA", type: "regular" },
+                    { id: "WN5FhwN6gVU", type: "short" }, { id: "4azt96uWZcM", type: "short" }
+                ]
+            },
+            {
+                title: "Travel",
+                playlistId: "PLxqLP3PD9uxlOsh8yJYbWqK-bfZ1cZ4aq",
+                coverVideoId: "otSm2afOdvE",
+                videos: [
+                    { id: "otSm2afOdvE", type: "regular" }, { id: "e6WifnHaPgQ", type: "regular" },
+                    { id: "MPQLD-Ucv8Q", type: "regular" }, { id: "QiAQCXHSk54", type: "regular" },
+                    { id: "KAZTt4Ar8AU", type: "regular" }, { id: "NnWmPEr5HNc", type: "regular" }
+                ]
+            },
+            {
+                title: "Technology",
+                playlistId: "PLxqLP3PD9uxlJiD51fnGeQnEvdH9j_DEb",
+                coverVideoId: "z9zX0DtTy-o",
+                videos: [
+                    { id: "z9zX0DtTy-o", type: "regular" }
+                ]
+            },
+            {
+                title: "Tourism & Companies",
+                playlistId: "PLxqLP3PD9uxlGZWE3XUEMrbVAk-v0OTia",
+                coverVideoId: "87N7DjpVA0g",
+                videos: [
+                    { id: "87N7DjpVA0g", type: "regular" }, { id: "mWY1fUCgA-w", type: "regular" },
+                    { id: "KEHy7vxuqhU", type: "regular" }, { id: "P5c-ky1U4pQ", type: "short" },
+                    { id: "A0eVEzYTQAk", type: "short" }
+                ]
+            }
+        ];
+
+        // === פונקציות יצירת אלמנטים ===
+
+        // יצירת וידאו סטנדרטי (ניתן לשלוט בווליום)
+        function createVideoElement(videoId, type) {
+            const wrapper = document.createElement('div');
+            wrapper.className = `vid-wrapper ${type}`;
+            // modestbranding=1 ו-rel=0 מעלימים מיתוג של יוטיוב ככל הניתן
+            // controls=1 (ברירת מחדל) מאפשר שליטה בווליום, מסך מלא ועוד
+            const iframe = document.createElement('iframe');
+            iframe.src = `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`;
+            iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+            iframe.allowFullscreen = true;
+            wrapper.appendChild(iframe);
+            return wrapper;
+        }
+
+        // יצירת סרטון רקע לכרטיסיית הפרויקט (מושתק, בלופ, מתנגן אוטומטית)
+        function createCoverVideo(videoId) {
+            const iframe = document.createElement('iframe');
+            // autoplay=1, mute=1 חובה כדי שיוטיוב יאפשר ניגון אוטומטי מבחוץ
+            iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&rel=0&modestbranding=1`;
+            iframe.allow = "autoplay; encrypted-media";
+            return iframe;
+        }
+
+        // === טעינת הנתונים למסך ===
+
+        // טעינת מועדפים
+        const favGrid = document.getElementById('favorites-grid');
+        favorites.forEach(video => {
+            favGrid.appendChild(createVideoElement(video.id, video.type));
+        });
+
+        // טעינת פרויקטים (תצוגה חיצונית)
+        const projGrid = document.getElementById('projects-grid');
+        projectsData.forEach((project, index) => {
+            const card = document.createElement('div');
+            card.className = 'project-card';
+            card.onclick = () => openModal(index);
+
+            // סרטון אווירה מיוט בחוץ
+            const coverVid = createCoverVideo(project.coverVideoId);
+            
+            // שכבת טקסט
+            const overlay = document.createElement('div');
+            overlay.className = 'project-title-overlay';
+            const title = document.createElement('h3');
+            title.innerText = project.title;
+            
+            overlay.appendChild(title);
+            card.appendChild(coverVid);
+            card.appendChild(overlay);
+            
+            projGrid.appendChild(card);
+        });
+
+        // === פונקציות חלון קופץ (Modal) ===
+        const modal = document.getElementById('project-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalVideosArea = document.getElementById('modal-videos');
+
+        function openModal(projectIndex) {
+            const project = projectsData[projectIndex];
+            modalTitle.innerText = project.title;
+            
+            // ניקוי סרטונים קודמים מהמודל
+            modalVideosArea.innerHTML = '';
+            
+            // הזרקת הסרטונים של הפרויקט הנבחר
+            project.videos.forEach(vid => {
+                modalVideosArea.appendChild(createVideoElement(vid.id, vid.type));
+            });
+
+            // פתיחת המודל
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden'; // מונע גלילה של כל האתר בזמן שהמודל פתוח
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto'; // מחזיר גלילה לאתר
+            
+            // עוצר את ניגון הסרטונים בעת סגירה
+            setTimeout(() => {
+                modalVideosArea.innerHTML = ''; 
+            }, 300); // מחכה לסיום האנימציה של הסגירה
+        }
+
+        // סגירת המודל בלחיצה מחוץ לחלון התוכן
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
 /* FADE IN ANIMATIONS */
 .fade-in{opacity:0;transform:translateY(24px);transition:opacity 0.7s ease,transform 0.7s ease}
 .fade-in.visible{opacity:1;transform:translateY(0)}
